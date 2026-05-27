@@ -5,6 +5,9 @@ import { fileURLToPath, URL } from 'node:url'
 export default defineConfig({
   server: {
     allowedHosts: true,
+    proxy: {
+      '/api': 'http://localhost:3333',
+    },
   },
   plugins: [vue()],
   resolve: {
