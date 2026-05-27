@@ -2,7 +2,11 @@
   <header class="flex items-center justify-between px-6 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm z-30">
     <!-- Left: logo + title -->
     <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center">
+      <div
+        class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center cursor-pointer"
+        @click.shift="resetData"
+        title="Shift+click to reset seed data"
+      >
         <Icon icon="heroicons:squares-2x2-solid" class="text-white text-lg" />
       </div>
       <span class="font-bold text-lg tracking-tight text-gray-900 dark:text-white">ProjectPulse</span>
@@ -142,6 +146,11 @@ function createProject() {
   newProjectName.value = ''
   newProjectColor.value = '#6366f1'
   showNewProject.value = false
+}
+
+function resetData() {
+  Object.keys(localStorage).filter(k => k.startsWith('pm-')).forEach(k => localStorage.removeItem(k))
+  window.location.reload()
 }
 
 // Simple click-outside directive
