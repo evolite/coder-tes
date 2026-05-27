@@ -2,9 +2,11 @@ import { onMounted, onUnmounted } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import type { TaskStatus } from '@/types'
 
-const API_BASE   = 'http://localhost:3333'
+const API_BASE   = window.location.hostname === 'localhost'
+  ? 'http://localhost:3333'
+  : `${window.location.protocol}//3333--main--project-dashboard--oaaler.slashdir.net`
 const POLL_MS    = 8_000
-const SEED_VER   = '2'   // bump this to force a localStorage reseed
+const SEED_VER   = '3'   // bump this to force a localStorage reseed
 
 export function useLiveState() {
   const taskStore = useTaskStore()

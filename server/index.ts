@@ -7,7 +7,7 @@ const app  = express()
 const PORT = 3333
 const STATE_FILE = path.join(import.meta.dirname, 'state.json')
 
-app.use(cors())
+app.use(cors({ origin: '*' }))
 app.use(express.json())
 
 function readState() {
