@@ -66,15 +66,15 @@
     },
     {
       "title": "Responsive mobile layout",
-      "status": "todo"
+      "status": "in-progress"
     },
     {
       "title": "Dark mode polish pass",
-      "status": "todo"
+      "status": "in-progress"
     },
     {
       "title": "README — setup & usage docs",
-      "status": "backlog"
+      "status": "todo"
     }
   ]
 }

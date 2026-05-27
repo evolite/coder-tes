@@ -15,8 +15,8 @@ const USER = {
 }
 
 export function buildSeedProjects(): Project[] {
-  const sprintScaffold = { id: nanoid(), name: 'Sprint 1 — Scaffold',   startDate: fmt(subDays(today, 10)), endDate: fmt(subDays(today, 3)), velocity: 5 }
-  const sprintFeatures = { id: nanoid(), name: 'Sprint 2 — Features',   startDate: fmt(subDays(today, 3)),  endDate: fmt(addDays(today, 4)), velocity: 2 }
+  const sprintScaffold = { id: nanoid(), name: 'Sprint 1 — Scaffold',   startDate: fmt(subDays(today, 10)), endDate: fmt(subDays(today, 3)), velocity: 6 }
+  const sprintFeatures = { id: nanoid(), name: 'Sprint 2 — Features',   startDate: fmt(subDays(today, 3)),  endDate: fmt(addDays(today, 4)), velocity: 6 }
   const sprintPolish   = { id: nanoid(), name: 'Sprint 3 — Polish & Ship', startDate: fmt(addDays(today, 4)), endDate: fmt(addDays(today, 11)), velocity: 0 }
 
   const dashId = nanoid()

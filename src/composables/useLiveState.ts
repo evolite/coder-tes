@@ -2,16 +2,24 @@ import { onMounted, onUnmounted } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import type { TaskStatus } from '@/types'
 
-const API_BASE = 'http://localhost:3333'
-const POLL_MS  = 10_000   // re-sync every 10 s
+const API_BASE   = 'http://localhost:3333'
+const POLL_MS    = 8_000
+const SEED_VER   = '2'   // bump this to force a localStorage reseed
 
 export function useLiveState() {
   const taskStore = useTaskStore()
   let timer: ReturnType<typeof setInterval>
 
+  // ── force reseed if seed version changed ──────────────────────────────────
+  if (localStorage.getItem('pm-seed-version') !== SEED_VER) {
+    ;['pm-projects', 'pm-tasks', 'pm-activity'].forEach(k => localStorage.removeItem(k))
+    localStorage.setItem('pm-seed-version', SEED_VER)
+    window.location.reload()
+  }
+
   async function sync() {
     try {
-      const res  = await fetch(`${API_BASE}/api/state`)
+      const res = await fetch(`${API_BASE}/api/state`)
       if (!res.ok) return
       const { tasks } = await res.json() as { tasks: { title: string; status: TaskStatus }[] }
 
@@ -22,7 +30,7 @@ export function useLiveState() {
         }
       }
     } catch {
-      // server not running — silent fail
+      // server offline — silent fail
     }
   }
 
