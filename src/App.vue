@@ -30,6 +30,7 @@ import SprintProgress from './components/SprintProgress.vue'
 import ActivityFeed from './components/ActivityFeed.vue'
 import TaskSlideOver from './components/TaskSlideOver.vue'
 import type { Task } from './types'
+import { useLiveState } from './composables/useLiveState'
 
 const isDark = useDark()
 
@@ -40,6 +41,8 @@ watchEffect(() => {
     document.documentElement.classList.remove('dark')
   }
 })
+
+useLiveState()
 
 const selectedTask = ref<Task | null>(null)
 
