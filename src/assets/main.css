@@ -1,0 +1,26 @@
+/* ---- Tailwind base ---- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- Global resets ---- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  @apply bg-gray-50 text-gray-800 dark:bg-gray-950 dark:text-gray-100;
+}
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { @apply bg-transparent; }
+::-webkit-scrollbar-thumb { @apply bg-gray-300 dark:bg-gray-600 rounded-full; }
+
+/* ---- Kanban drag feedback ---- */
+.dragging { opacity: 0.45; }
+.drag-over { @apply ring-2 ring-brand-500 ring-inset; }
