@@ -4,6 +4,10 @@ import { nanoid } from 'nanoid'
 import { buildSeedProjects } from '@/utils/seed'
 import type { Project, Sprint } from '@/types'
 
+async function apiPost(path: string, body: unknown) {
+  try { await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }) } catch {}
+}
+
 export const useProjectStore = defineStore('projects', () => {
   const projects = useLocalStorage<Project[]>('pm-projects', () => buildSeedProjects())
   const activeProjectId = useLocalStorage<string>('pm-active-project', () => projects.value[0]?.id ?? '')
@@ -14,6 +18,7 @@ export const useProjectStore = defineStore('projects', () => {
     const p: Project = { id: nanoid(), name, color, sprints: [], currentSprintId: null }
     projects.value.push(p)
     activeProjectId.value = p.id
+    apiPost('/api/projects', p)
   }
 
   function updateProject(id: string, patch: Partial<Project>) {

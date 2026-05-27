@@ -58,6 +58,10 @@
 
     <!-- Right: date + dark mode -->
     <div class="flex items-center gap-3">
+      <div :title="apiOnline ? 'API connected' : 'API offline'" class="flex items-center gap-1 text-xs">
+        <span class="w-2 h-2 rounded-full" :class="apiOnline ? 'bg-emerald-400' : 'bg-gray-300 dark:bg-gray-600'" />
+        <span class="hidden sm:block text-gray-400 text-[11px]">{{ apiOnline ? 'live' : 'offline' }}</span>
+      </div>
       <span class="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">{{ todayLabel }}</span>
       <button
         @click="toggleDark()"
@@ -113,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useDark, useToggle } from '@vueuse/core'
 import { format } from 'date-fns'
@@ -127,6 +131,22 @@ const { projects, activeProjectId } = store
 
 const activeProject = computed(() => store.activeProject())
 const todayLabel = format(new Date(), 'EEE, MMM d yyyy')
+
+// ── API health indicator ──────────────────────────────────────────────────
+const apiOnline = ref(false)
+let healthTimer: ReturnType<typeof setInterval>
+
+async function checkHealth() {
+  try {
+    const r = await fetch('/api/state', { signal: AbortSignal.timeout(2000) })
+    apiOnline.value = r.ok
+  } catch {
+    apiOnline.value = false
+  }
+}
+
+onMounted(() => { checkHealth(); healthTimer = setInterval(checkHealth, 10_000) })
+onUnmounted(() => clearInterval(healthTimer))
 
 const showProjectMenu = ref(false)
 const showNewProject  = ref(false)

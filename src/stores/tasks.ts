@@ -5,18 +5,18 @@ import { computed } from 'vue'
 import { buildSeedTasks } from '@/utils/seed'
 import { useProjectStore } from './projects'
 import { useActivityStore } from './activity'
-import type { Task, TaskStatus, Subtask, Comment } from '@/types'
+import type { Task, TaskStatus, Comment } from '@/types'
 import { isAfter, parseISO, startOfToday } from 'date-fns'
 
-// Fire-and-forget write-back to state.json via the Vite proxy
-async function persistStatus(title: string, status: TaskStatus) {
-  try {
-    await fetch(`/api/tasks/${encodeURIComponent(title)}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    })
-  } catch { /* server offline — localStorage is still the source of truth */ }
+// ── Fire-and-forget API helpers ──────────────────────────────────────────────
+async function apiPost(path: string, body: unknown) {
+  try { await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }) } catch {}
+}
+async function apiPatch(path: string, body: unknown) {
+  try { await fetch(path, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }) } catch {}
+}
+async function apiDelete(path: string) {
+  try { await fetch(path, { method: 'DELETE' }) } catch {}
 }
 
 export const useTaskStore = defineStore('tasks', () => {
@@ -38,6 +38,7 @@ export const useTaskStore = defineStore('tasks', () => {
     tasks.value.push(t)
     const activity = useActivityStore()
     activity.push('You', '', 'created', t.title, `in ${statusLabel(t.status)}`)
+    apiPost('/api/tasks', t)
     return t
   }
 
@@ -46,7 +47,7 @@ export const useTaskStore = defineStore('tasks', () => {
     if (!t || t.status === newStatus) return
     const old = t.status
     t.status = newStatus
-    persistStatus(t.title, newStatus)
+    apiPatch('/api/tasks/' + taskId, { status: newStatus })
     const activity = useActivityStore()
     activity.push('You', '', 'moved', t.title, `${statusLabel(old)} → ${statusLabel(newStatus)}`)
   }
@@ -55,24 +56,37 @@ export const useTaskStore = defineStore('tasks', () => {
     const idx = tasks.value.findIndex(t => t.id === taskId)
     if (idx !== -1) {
       tasks.value[idx] = { ...tasks.value[idx], ...patch }
-      if (patch.status) persistStatus(tasks.value[idx].title, patch.status)
+      apiPatch('/api/tasks/' + taskId, patch)
+    }
+  }
+
+  // Same as updateTask but NO api call — used by the poller to avoid loops
+  function updateTaskLocal(taskId: string, patch: Partial<Task>) {
+    const idx = tasks.value.findIndex(t => t.id === taskId)
+    if (idx !== -1) {
+      tasks.value[idx] = { ...tasks.value[idx], ...patch }
     }
   }
 
   function deleteTask(taskId: string) {
     tasks.value = tasks.value.filter(t => t.id !== taskId)
+    apiDelete('/api/tasks/' + taskId)
   }
 
   function addSubtask(taskId: string, title: string) {
     const t = tasks.value.find(t => t.id === taskId)
     if (!t) return
     t.subtasks.push({ id: nanoid(), title, done: false })
+    apiPatch('/api/tasks/' + taskId, { subtasks: t.subtasks })
   }
 
   function toggleSubtask(taskId: string, subtaskId: string) {
     const t = tasks.value.find(t => t.id === taskId)
     const s = t?.subtasks.find(s => s.id === subtaskId)
-    if (s) s.done = !s.done
+    if (s) {
+      s.done = !s.done
+      apiPatch('/api/tasks/' + taskId, { subtasks: t!.subtasks })
+    }
   }
 
   function addComment(taskId: string, body: string, author = 'You', avatar = '') {
@@ -80,6 +94,7 @@ export const useTaskStore = defineStore('tasks', () => {
     if (!t) return
     const c: Comment = { id: nanoid(), author, avatar, body, createdAt: new Date().toISOString() }
     t.comments.push(c)
+    apiPatch('/api/tasks/' + taskId, { comments: t.comments })
   }
 
   // Summary stats for a project
@@ -95,7 +110,7 @@ export const useTaskStore = defineStore('tasks', () => {
     })
   }
 
-  return { tasks, projectTasks, columnTasks, addTask, moveTask, updateTask, deleteTask, addSubtask, toggleSubtask, addComment, stats }
+  return { tasks, projectTasks, columnTasks, addTask, moveTask, updateTask, updateTaskLocal, deleteTask, addSubtask, toggleSubtask, addComment, stats }
 })
 
 function statusLabel(s: TaskStatus) {

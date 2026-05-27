@@ -25,6 +25,9 @@
             @blur="onTitleBlur"
             @keydown.enter.prevent="($event.target as HTMLElement).blur()"
           >{{ task.title }}</h1>
+          <Transition name="fade">
+            <span v-if="saving" class="text-xs text-emerald-500 font-medium px-2">Saved ✓</span>
+          </Transition>
           <button
             @click="handleDelete"
             class="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition flex-shrink-0"
@@ -279,6 +282,8 @@ const newSubtask  = ref('')
 const newComment  = ref('')
 const descDraft   = ref('')
 const titleEl     = ref<HTMLElement | null>(null)
+const saving      = ref(false)
+let savingTimer: ReturnType<typeof setTimeout> | null = null
 
 // Sync descDraft when task changes
 watch(() => props.task, (t) => {
@@ -294,7 +299,13 @@ const subtaskPct = computed(() => {
 
 // ── actions ────────────────────────────────────────────────
 function patch(partial: Partial<Task>) {
-  if (props.task) taskStore.updateTask(props.task.id, partial)
+  if (props.task) {
+    taskStore.updateTask(props.task.id, partial)
+    // Show saved badge for 800ms
+    if (savingTimer) clearTimeout(savingTimer)
+    saving.value = true
+    savingTimer = setTimeout(() => { saving.value = false }, 800)
+  }
 }
 
 function onTitleBlur(e: FocusEvent) {
@@ -378,6 +389,16 @@ function timeAgo(ts: string) {
 .slide-enter-from,
 .slide-leave-to {
   transform: translateX(100%);
+}
+
+/* Fade transition for Saved badge */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 /* Backdrop transition */
