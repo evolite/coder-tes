@@ -8,6 +8,17 @@ import { useActivityStore } from './activity'
 import type { Task, TaskStatus, Subtask, Comment } from '@/types'
 import { isAfter, parseISO, startOfToday } from 'date-fns'
 
+// Fire-and-forget write-back to state.json via the Vite proxy
+async function persistStatus(title: string, status: TaskStatus) {
+  try {
+    await fetch(`/api/tasks/${encodeURIComponent(title)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    })
+  } catch { /* server offline — localStorage is still the source of truth */ }
+}
+
 export const useTaskStore = defineStore('tasks', () => {
   const tasks = useLocalStorage<Task[]>('pm-tasks', () => {
     const ps = useProjectStore()
@@ -35,13 +46,17 @@ export const useTaskStore = defineStore('tasks', () => {
     if (!t || t.status === newStatus) return
     const old = t.status
     t.status = newStatus
+    persistStatus(t.title, newStatus)
     const activity = useActivityStore()
     activity.push('You', '', 'moved', t.title, `${statusLabel(old)} → ${statusLabel(newStatus)}`)
   }
 
   function updateTask(taskId: string, patch: Partial<Task>) {
     const idx = tasks.value.findIndex(t => t.id === taskId)
-    if (idx !== -1) tasks.value[idx] = { ...tasks.value[idx], ...patch }
+    if (idx !== -1) {
+      tasks.value[idx] = { ...tasks.value[idx], ...patch }
+      if (patch.status) persistStatus(tasks.value[idx].title, patch.status)
+    }
   }
 
   function deleteTask(taskId: string) {
